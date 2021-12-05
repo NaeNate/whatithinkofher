@@ -48,15 +48,11 @@ const Index = () => {
       querySnapshot = await getDocs(
         query(
           collection(db, "posts"),
-          where(
-            "createdAt",
-            ">",
-            new Date(year, parseInt(month) + 1).getTime()
-          ),
+          where("createdAt", ">", new Date(year, month).getTime()),
           where(
             "createdAt",
             "<",
-            new Date(year, parseInt(month) + 2).getTime()
+            new Date(year, parseInt(month) + 1).getTime()
           ),
           orderBy("createdAt", "desc"),
           limit(10)
