@@ -16,13 +16,13 @@ const Index = () => {
   const [posts, setPosts] = useState([]);
   const router = useRouter();
 
+  const { year, month } = router.query;
+  if (month && !year) router.push("/");
+
   const fetchPosts = async () => {
     if (!router.isReady) return;
 
     setPosts([]);
-
-    const { year, month } = router.query;
-    if (month && !year) router.push("/");
 
     let querySnapshot = await getDocs(
       query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(10))
@@ -48,11 +48,15 @@ const Index = () => {
       querySnapshot = await getDocs(
         query(
           collection(db, "posts"),
-          where("createdAt", ">", new Date(year, month).getTime()),
+          where(
+            "createdAt",
+            ">",
+            new Date(year, parseInt(month) + 1).getTime()
+          ),
           where(
             "createdAt",
             "<",
-            new Date(year, parseInt(month) + 1).getTime()
+            new Date(year, parseInt(month) + 2).getTime()
           ),
           orderBy("createdAt", "desc"),
           limit(10)
