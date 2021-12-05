@@ -7,50 +7,75 @@ import {
   where,
 } from "firebase/firestore";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { db } from "../firebase";
 import styles from "../styles/index.module.css";
-import { useRouter } from "next/router";
 
 const Index = () => {
   const [posts, setPosts] = useState([]);
   const router = useRouter();
 
-  let q = query(
-    collection(db, "posts"),
-    orderBy("createdAt", "desc"),
-    limit(10)
-  );
-
-  if (router.query.year) {
-    q = query(
-      collection(db, "posts"),
-      where("createdAt", ">", new Date(router.query.year).getTime()),
-      where(
-        "createdAt",
-        "<",
-        new Date((parseInt(router.query.year) + 1).toString()).getTime()
-      ),
-      orderBy("createdAt", "desc"),
-      limit(10)
-    );
-    console.log("oopop");
-  } else console.log("sldkfjds");
-
   const fetchPosts = async () => {
-    const querySnapshot = await getDocs(q);
+    if (!router.isReady) return;
+
+    setPosts([]);
+
+    const { year, month } = router.query;
+    if (month && !year) router.push("/");
+
+    let querySnapshot = await getDocs(
+      query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(10))
+    );
+
+    if (year && !month) {
+      querySnapshot = await getDocs(
+        query(
+          collection(db, "posts"),
+          where("createdAt", ">", new Date(year).getTime()),
+          where(
+            "createdAt",
+            "<",
+            new Date((parseInt(router.query.year) + 1).toString()).getTime()
+          ),
+          orderBy("createdAt", "desc"),
+          limit(10)
+        )
+      );
+    }
+
+    if (year && month) {
+      querySnapshot = await getDocs(
+        query(
+          collection(db, "posts"),
+          where("createdAt", ">", new Date(year, month).getTime()),
+          where(
+            "createdAt",
+            "<",
+            new Date(year, parseInt(month) + 1).getTime()
+          ),
+          orderBy("createdAt", "desc"),
+          limit(10)
+        )
+      );
+    }
+
     querySnapshot.forEach((doc) => {
+      const data = doc.data();
       setPosts((posts) => [
         ...posts,
-        <Post key={doc.data().createdAt.toString()} data={doc.data()} />,
+        <Post
+          body={data.body}
+          createdAt={data.createdAt}
+          key={data.createdAt}
+        />,
       ]);
     });
   };
 
   useEffect(() => {
-    setPosts([]);
     fetchPosts();
-  }, []);
+  }, [router.isReady]);
 
   return (
     <>
@@ -65,11 +90,11 @@ const Index = () => {
   );
 };
 
-const Post = ({ data }) => {
+const Post = ({ body, createdAt }) => {
   return (
     <div className={styles.post}>
-      <p className={styles.body}>{data.body}</p>
-      <p className={styles.date}>{new Date(data.createdAt).toDateString()}</p>
+      <p className={styles.body}>{body}</p>
+      <p className={styles.date}>{new Date(createdAt).toDateString()}</p>
     </div>
   );
 };
