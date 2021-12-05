@@ -1,27 +1,57 @@
-import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  where,
+} from "firebase/firestore";
 import Head from "next/head";
 import { useEffect, useState } from "react";
 import { db } from "../firebase";
 import styles from "../styles/index.module.css";
+import { useRouter } from "next/router";
 
 const Index = () => {
   const [posts, setPosts] = useState([]);
+  const router = useRouter();
+
+  let q = query(
+    collection(db, "posts"),
+    orderBy("createdAt", "desc"),
+    limit(10)
+  );
+
+  if (router.query.year) {
+    q = query(
+      collection(db, "posts"),
+      where("createdAt", ">", new Date(router.query.year).getTime()),
+      where(
+        "createdAt",
+        "<",
+        new Date((parseInt(router.query.year) + 1).toString()).getTime()
+      ),
+      orderBy("createdAt", "desc"),
+      limit(10)
+    );
+    console.log("oopop");
+  } else console.log("sldkfjds");
+
+  const fetchPosts = async () => {
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach((doc) => {
+      setPosts((posts) => [
+        ...posts,
+        <Post key={doc.data().createdAt.toString()} data={doc.data()} />,
+      ]);
+    });
+  };
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      const querySnapshot = await getDocs(
-        query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(10))
-      );
-      querySnapshot.forEach((doc) => {
-        setPosts((posts) => [
-          ...posts,
-          <Post key={doc.data().createdAt.toString()} data={doc.data()} />,
-        ]);
-      });
-    };
-
+    setPosts([]);
     fetchPosts();
   }, []);
+
   return (
     <>
       <Head>
