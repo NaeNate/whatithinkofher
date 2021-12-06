@@ -5,9 +5,7 @@ import { useEffect, useState } from "react";
 import { auth, db } from "../firebase";
 
 const Create = () => {
-  const [logged, setLogged] = useState(
-    process.env.NODE_ENV === "development" ? true : false
-  );
+  const [logged, setLogged] = useState(false);
 
   useEffect(() => {
     onAuthStateChanged(auth, (user) => {

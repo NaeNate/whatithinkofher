@@ -82,7 +82,10 @@ const Index = () => {
       <Head>
         <title>whatithinkofher</title>
         <meta name="viewport" content="initial-scale=1.0, width=device-width" />
-        <meta name="description" content="Where I write what I think of her." />
+        <meta
+          name="description"
+          content="A collection of snippets where I write what I think of her."
+        />
       </Head>
       <h1 className={styles.header}>whatithinkofher</h1>
       {posts}
