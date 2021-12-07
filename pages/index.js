@@ -7,17 +7,31 @@ import {
   where,
 } from "firebase/firestore";
 import Head from "next/head";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { db } from "../firebase";
-import styles from "../styles/index.module.css";
+import styles from "../styles/styles.module.css";
 
 const Index = () => {
   const [posts, setPosts] = useState([]);
+  const [years, setYears] = useState([]);
+  const existingYears = [];
   const router = useRouter();
 
   const { year, month } = router.query;
   if (month && !year) router.push("/");
+
+  useEffect(() => {
+    fetchPosts();
+  }, [router.isReady]);
+
+  const createTimeline = (year) => {
+    if (!existingYears.includes(year)) {
+      setYears((years) => [...years, <Year year={year} key={year} />]);
+      existingYears.push(year);
+    }
+  };
 
   const fetchPosts = async () => {
     if (!router.isReady) return;
@@ -61,21 +75,18 @@ const Index = () => {
     }
 
     querySnapshot.forEach((doc) => {
-      const data = doc.data();
       setPosts((posts) => [
         ...posts,
         <Post
-          body={data.body}
-          createdAt={data.createdAt}
-          key={data.createdAt}
+          body={doc.data().body}
+          createdAt={doc.data().createdAt}
+          key={doc.data().createdAt}
         />,
       ]);
+
+      createTimeline(new Date(doc.data().createdAt).getFullYear());
     });
   };
-
-  useEffect(() => {
-    fetchPosts();
-  }, [router.isReady]);
 
   return (
     <>
@@ -88,7 +99,13 @@ const Index = () => {
         />
       </Head>
       <h1 className={styles.header}>whatithinkofher</h1>
-      {posts}
+      <div className={styles.posts}>{posts}</div>
+      <div className={styles.sidebar}>
+        <Link href="/random">
+          <a className={styles.link}>Random Snippet</a>
+        </Link>
+        {years}
+      </div>
     </>
   );
 };
@@ -98,6 +115,14 @@ const Post = ({ body, createdAt }) => {
     <div className={styles.post}>
       <p className={styles.body}>{body}</p>
       <p className={styles.date}>{new Date(createdAt).toDateString()}</p>
+    </div>
+  );
+};
+
+const Year = ({ year }) => {
+  return (
+    <div>
+      <p>{year}</p>
     </div>
   );
 };

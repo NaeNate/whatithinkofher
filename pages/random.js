@@ -2,7 +2,7 @@ import { collection, getDocs } from "firebase/firestore";
 import Head from "next/head";
 import { useEffect, useState } from "react";
 import { db } from "../firebase";
-import styles from "../styles/random.module.css";
+import styles from "../styles/styles.module.css";
 
 const Index = () => {
   const [post, setPost] = useState();
