@@ -5,6 +5,7 @@ import {
   orderBy,
   query,
   where,
+  startAt,
 } from "firebase/firestore";
 import Head from "next/head";
 import Link from "next/link";
@@ -15,23 +16,14 @@ import styles from "../styles/styles.module.css";
 
 const Index = () => {
   const [posts, setPosts] = useState([]);
-  const [years, setYears] = useState([]);
-  const existingYears = [];
   const router = useRouter();
 
-  const { year, month } = router.query;
+  const { year, month, cursor = 0 } = router.query;
   if (month && !year) router.push("/");
 
   useEffect(() => {
     fetchPosts();
   }, [router.isReady]);
-
-  const createTimeline = (year) => {
-    if (!existingYears.includes(year)) {
-      setYears((years) => [...years, <Year year={year} key={year} />]);
-      existingYears.push(year);
-    }
-  };
 
   const fetchPosts = async () => {
     if (!router.isReady) return;
@@ -69,22 +61,25 @@ const Index = () => {
             new Date(year, parseInt(month) + 1).getTime()
           ),
           orderBy("createdAt", "desc"),
+          startAt(cursor),
           limit(10)
         )
       );
     }
 
     querySnapshot.forEach((doc) => {
+      const createdAt = doc.data().createdAt;
+      const body = doc.data().body;
+
+      const date = new Date(createdAt);
+
       setPosts((posts) => [
         ...posts,
-        <Post
-          body={doc.data().body}
-          createdAt={doc.data().createdAt}
-          key={doc.data().createdAt}
-        />,
+        <div className={styles.post} key={createdAt}>
+          <p className={styles.body}>{body}</p>
+          <p className={styles.date}>{date.toDateString()}</p>
+        </div>,
       ]);
-
-      createTimeline(new Date(doc.data().createdAt).getFullYear());
     });
   };
 
@@ -100,30 +95,19 @@ const Index = () => {
       </Head>
       <h1 className={styles.header}>whatithinkofher</h1>
       <div className={styles.posts}>{posts}</div>
-      <div className={styles.sidebar}>
-        <Link href="/random">
-          <a className={styles.link}>Random Snippet</a>
+      <Link href={`/?cursor=${parseInt(cursor) + 10}`}>
+        <a>Next Page</a>
+      </Link>{" "}
+      {!!parseInt(cursor) && (
+        <Link
+          href={
+            parseInt(cursor) > 10 ? `/?cursor=${parseInt(cursor) - 10}` : "/"
+          }
+        >
+          <a>Previous Page</a>
         </Link>
-        {years}
-      </div>
+      )}
     </>
-  );
-};
-
-const Post = ({ body, createdAt }) => {
-  return (
-    <div className={styles.post}>
-      <p className={styles.body}>{body}</p>
-      <p className={styles.date}>{new Date(createdAt).toDateString()}</p>
-    </div>
-  );
-};
-
-const Year = ({ year }) => {
-  return (
-    <div>
-      <p>{year}</p>
-    </div>
   );
 };
 
