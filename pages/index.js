@@ -5,7 +5,6 @@ import {
   orderBy,
   query,
   where,
-  startAt,
 } from "firebase/firestore";
 import Head from "next/head";
 import Link from "next/link";
@@ -18,12 +17,12 @@ const Index = () => {
   const [posts, setPosts] = useState([]);
   const router = useRouter();
 
-  const { year, month, cursor = 0 } = router.query;
+  const { year, month, page = 0 } = router.query;
   if (month && !year) router.push("/");
 
   useEffect(() => {
     fetchPosts();
-  }, [router.isReady]);
+  }, [router.isReady, router.query.page]);
 
   const fetchPosts = async () => {
     if (!router.isReady) return;
@@ -31,13 +30,19 @@ const Index = () => {
     setPosts([]);
 
     let querySnapshot = await getDocs(
-      query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(10))
+      query(
+        collection(db, "posts"),
+        where("id", ">=", page * 10),
+        orderBy("id", "desc"),
+        limit(10)
+      )
     );
 
     if (year && !month) {
       querySnapshot = await getDocs(
         query(
           collection(db, "posts"),
+          where("id", ">=", page * 10),
           where("createdAt", ">", new Date(year).getTime()),
           where(
             "createdAt",
@@ -48,12 +53,11 @@ const Index = () => {
           limit(10)
         )
       );
-    }
-
-    if (year && month) {
+    } else if (year && month) {
       querySnapshot = await getDocs(
         query(
           collection(db, "posts"),
+          where("id", ">=", page * 10),
           where("createdAt", ">", new Date(year, month).getTime()),
           where(
             "createdAt",
@@ -61,7 +65,6 @@ const Index = () => {
             new Date(year, parseInt(month) + 1).getTime()
           ),
           orderBy("createdAt", "desc"),
-          startAt(cursor),
           limit(10)
         )
       );
@@ -95,15 +98,11 @@ const Index = () => {
       </Head>
       <h1 className={styles.header}>whatithinkofher</h1>
       <div className={styles.posts}>{posts}</div>
-      <Link href={`/?cursor=${parseInt(cursor) + 10}`}>
+      <Link href={`/?page=${parseInt(page) + 1}`}>
         <a>Next Page</a>
       </Link>{" "}
-      {!!parseInt(cursor) && (
-        <Link
-          href={
-            parseInt(cursor) > 10 ? `/?cursor=${parseInt(cursor) - 10}` : "/"
-          }
-        >
+      {!!parseInt(page) && (
+        <Link href={parseInt(page) > 1 ? `/?page=${parseInt(page) - 1}` : "/"}>
           <a>Previous Page</a>
         </Link>
       )}
