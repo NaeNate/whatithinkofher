@@ -4,6 +4,7 @@ import {
   limit,
   orderBy,
   query,
+  startAt,
   where,
 } from "firebase/firestore";
 import Head from "next/head";
@@ -29,11 +30,21 @@ const Index = () => {
 
     setPosts([]);
 
+    let id;
+
+    await getDocs(
+      query(collection(db, "posts"), orderBy("id", "desc"), limit(1))
+    ).then((snapshot) => {
+      snapshot.forEach((doc) => {
+        id = doc.data().id;
+      });
+    });
+
     let querySnapshot = await getDocs(
       query(
         collection(db, "posts"),
-        where("id", ">=", page * 10),
         orderBy("id", "desc"),
+        startAt(id - page * 10),
         limit(10)
       )
     );
@@ -71,16 +82,13 @@ const Index = () => {
     }
 
     querySnapshot.forEach((doc) => {
-      const createdAt = doc.data().createdAt;
-      const body = doc.data().body;
-
-      const date = new Date(createdAt);
-
       setPosts((posts) => [
         ...posts,
-        <div className={styles.post} key={createdAt}>
-          <p className={styles.body}>{body}</p>
-          <p className={styles.date}>{date.toDateString()}</p>
+        <div className={styles.post} key={doc.data().createdAt}>
+          <p className={styles.body}>{doc.data().body}</p>
+          <p className={styles.date}>
+            {new Date(doc.data().createdAt).toDateString()}
+          </p>
         </div>,
       ]);
     });
@@ -98,11 +106,13 @@ const Index = () => {
       </Head>
       <h1 className={styles.header}>whatithinkofher</h1>
       <div className={styles.posts}>{posts}</div>
-      <Link href={`/?page=${parseInt(page) + 1}`}>
-        <a>Next Page</a>
-      </Link>{" "}
-      {!!parseInt(page) && (
-        <Link href={parseInt(page) > 1 ? `/?page=${parseInt(page) - 1}` : "/"}>
+      {posts.length < 10 || (
+        <Link href={`/?page=${parseInt(page) + 1}`}>
+          <a>Next Page</a>
+        </Link>
+      )}{" "}
+      {!!page && (
+        <Link href={page > 1 ? `/?page=${page - 1}` : "/"}>
           <a>Previous Page</a>
         </Link>
       )}
