@@ -1,12 +1,5 @@
 import { onAuthStateChanged, signInWithEmailAndPassword } from "firebase/auth";
-import {
-  addDoc,
-  collection,
-  getDocs,
-  query,
-  orderBy,
-  limit,
-} from "firebase/firestore";
+import { addDoc, collection } from "firebase/firestore";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { auth, db } from "../firebase";
@@ -27,27 +20,16 @@ const Create = () => {
   );
 };
 
-const CreatePostForm = (as) => {
+const CreatePostForm = () => {
   const [body, setBody] = useState("");
   const router = useRouter();
 
   const handleCreatePost = async (e) => {
     e.preventDefault();
 
-    const querySnapshot = await getDocs(
-      query(collection(db, "posts"), orderBy("id", "desc"), limit(1))
-    );
-
-    let id;
-
-    querySnapshot.forEach((doc) => {
-      id = parseInt(doc.data().id);
-    });
-
     await addDoc(collection(db, "posts"), {
       body,
       createdAt: Date.now(),
-      id: id + 1,
     }).then(() => router.push("/"));
   };
 
@@ -56,6 +38,8 @@ const CreatePostForm = (as) => {
       <textarea
         type="text"
         required={true}
+        rows="20"
+        cols="80"
         value={body}
         onChange={(e) => setBody(e.target.value)}
       ></textarea>
