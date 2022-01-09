@@ -19,7 +19,7 @@ const Index = () => {
     setPosts([]);
 
     const querySnapshot = await getDocs(
-      query(collection(db, "posts"), orderBy("id", "desc"), limit(10))
+      query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(10))
     );
 
     querySnapshot.forEach((doc) => {
