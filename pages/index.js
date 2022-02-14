@@ -1,4 +1,4 @@
-import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -19,7 +19,7 @@ const Index = () => {
     setPosts([]);
 
     const querySnapshot = await getDocs(
-      query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(10))
+      query(collection(db, "posts"), orderBy("createdAt", "desc"))
     );
 
     querySnapshot.forEach((doc) => {
